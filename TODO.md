@@ -16,7 +16,7 @@ Get a connection string. Free tier works.
 
 ## 2. Local dev test
 
-Run locally before deploying to Railway.
+Run locally before deploying to Render.
 
 ```powershell
 cd C:\Users\Luke\Documents\2026\Mar-19\groundwork-pipeline
@@ -57,28 +57,26 @@ PIPELINE_API_URL=http://localhost:8000
 
 ---
 
-## 4. Railway deploy
+## 4. Render deploy
 
-- [ ] Create new Railway service from the `groundwork-pipeline` GitHub repo
-- [ ] Set env vars in Railway dashboard:
-  - `ANTHROPIC_API_KEY`
-  - `NEON_DATABASE_URL`
-  - `ALLOWED_ORIGINS=https://modrynstudio.com,http://localhost:3000`
-- [ ] Confirm Railway start command picks up `Procfile`: `web: uvicorn main:app --host 0.0.0.0 --port $PORT`
-- [ ] Note Railway's public URL (e.g. `https://groundwork-pipeline-production.up.railway.app`)
+- [x] Create new Web Service from the `groundwork-pipeline` GitHub repo
+- [x] Build: `pip install -r requirements.txt`
+- [x] Start: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- [x] Set env vars: `ANTHROPIC_API_KEY`, `NEON_DATABASE_URL`, `ALLOWED_ORIGINS`
+- [x] URL: https://groundwork-pipeline.onrender.com
 
 ---
 
-## 5. Connect frontend to Railway
+## 5. Connect frontend to Render
 
-Update `PIPELINE_API_URL` in Vercel environment variables (or `.env.local` for local testing against prod backend):
+Add `PIPELINE_API_URL` in Vercel environment variables:
 
 ```
-PIPELINE_API_URL=https://groundwork-pipeline-production.up.railway.app
+PIPELINE_API_URL=https://groundwork-pipeline.onrender.com
 ```
 
-- [ ] Redeploy frontend (or `vercel env pull` + restart dev server)
-- [ ] Full end-to-end test against Railway backend
+- [ ] Add env var in Vercel dashboard → redeploy
+- [ ] Full end-to-end test against Render backend
 
 ---
 
