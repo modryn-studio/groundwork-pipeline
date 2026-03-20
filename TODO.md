@@ -1,6 +1,9 @@
 # Pre-Launch TODO — End-to-End Test
 
-Steps required before the full flow works: `/start` → dump ideas → pick market → "Run pipeline →" → `/run/[threadId]` → Checkpoint 0 → lock in → "Market locked."
+Two entry paths through the pipeline:
+
+- **Dump path**: `/start` → dump ideas → "Run pipeline →" → `/run/[threadId]` → Stage 0 clusters ideas → Checkpoint 0 (pick market) → "Market locked."
+- **Market path**: `/start` → pick a market → "Run pipeline →" → `/run/[threadId]` → skip Stage 0 + Checkpoint 0 → straight to research
 
 ---
 
@@ -8,9 +11,9 @@ Steps required before the full flow works: `/start` → dump ideas → pick mark
 
 Get a connection string. Free tier works.
 
-- [ ] Create a Neon project at neon.tech
-- [ ] Copy the connection string — format: `postgresql://user:pass@host/db?sslmode=require`
-- [ ] Note: `pipeline_jobs` table and LangGraph checkpoint tables are created automatically on first startup (`db.create_tables()` + `checkpointer.setup()` both run in lifespan)
+- [x] Create a Neon project at neon.tech
+- [x] Copy the connection string — format: `postgresql://user:pass@host/db?sslmode=require`
+- [x] Note: `pipeline_jobs` table and LangGraph checkpoint tables are created automatically on first startup (`db.create_tables()` + `checkpointer.setup()` both run in lifespan)
 
 ---
 
@@ -32,15 +35,15 @@ pip install -r requirements.txt
 copy .env.example .env
 # Fill in: ANTHROPIC_API_KEY, NEON_DATABASE_URL, ALLOWED_ORIGINS=http://localhost:3000
 
-# Run
-uvicorn main:app --reload
+# Run (Windows — uses SelectorEventLoop required by psycopg async)
+python run.py
 ```
 
-- [ ] `GET http://localhost:8000/health` → `{ "status": "ok" }`
-- [ ] `POST http://localhost:8000/pipeline/start` with `{ "ideas": ["some idea"], "market_signal": null }` → `{ "thread_id": "..." }`
-- [ ] `GET http://localhost:8000/pipeline/status/{thread_id}` → watch state go `pending → running → interrupted`
-- [ ] Interrupt data includes `{ type: "checkpoint", stage: "market_selection", options: [...] }`
-- [ ] `POST http://localhost:8000/pipeline/resume/{thread_id}` with `{ "decision": { "chosen_market": "..." } }` → state goes to `complete`
+- [x] `GET http://localhost:8001/health` → `{ "status": "ok" }`
+- [x] `POST http://localhost:8001/pipeline/start` with `{ "ideas": ["some idea"], "market_signal": null }` → `{ "thread_id": "..." }`
+- [x] `GET http://localhost:8001/pipeline/status/{thread_id}` → watch state go `pending → running → interrupted`
+- [x] Interrupt data includes `{ type: "checkpoint", stage: "market_selection", options: [...] }`
+- [x] `POST http://localhost:8001/pipeline/resume/{thread_id}` with `{ "decision": { "chosen_market": "..." } }` → state goes to `complete`
 
 ---
 
@@ -49,11 +52,11 @@ uvicorn main:app --reload
 In `C:\Users\Luke\Documents\2026\Mar-19\groundwork\.env.local`:
 
 ```
-PIPELINE_API_URL=http://localhost:8000
+PIPELINE_API_URL=http://localhost:8001
 ```
 
-- [ ] Restart Next.js dev server
-- [ ] Full browser flow: `/start` → ideas → market → "Run pipeline →" → `/run/[threadId]` → pick market → "Market locked."
+- [x] Restart Next.js dev server
+- [x] Full browser flow: `/start` → ideas → market → "Run pipeline →" → `/run/[threadId]` → pick market → "Market locked."
 
 ---
 
@@ -75,8 +78,8 @@ Add `PIPELINE_API_URL` in Vercel environment variables:
 PIPELINE_API_URL=https://groundwork-pipeline.onrender.com
 ```
 
-- [ ] Add env var in Vercel dashboard → redeploy
-- [ ] Full end-to-end test against Render backend
+- [x] Add `PIPELINE_API_URL=https://groundwork-pipeline.onrender.com` in Vercel dashboard → redeploy
+- [ ] Full end-to-end test: `modrynstudio.com/tools/groundwork/start` → ideas → market → "Run pipeline →" → pick market → "Market locked." (blocked on modryn-studio-v2 rewrite for `/tools/groundwork`)
 
 ---
 

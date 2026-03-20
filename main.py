@@ -79,8 +79,8 @@ async def health():
 
 @app.post("/pipeline/start")
 async def pipeline_start(body: PipelineStartRequest):
-    if not body.ideas:
-        raise HTTPException(status_code=400, detail="ideas required")
+    if not body.ideas and not body.market_signal:
+        raise HTTPException(status_code=400, detail="ideas or market_signal required")
 
     job_id = str(uuid.uuid4())
     await create_job(job_id)
@@ -148,7 +148,13 @@ async def run_pipeline_task(
                 interrupt_data=json.dumps(interrupt_val),
             )
         else:
-            await update_job(job_id, state="complete")
+            graph_state = await compiled_graph.aget_state(config)
+            market = graph_state.values.get("market", "")
+            await update_job(
+                job_id,
+                state="complete",
+                result=json.dumps({"market_confirmed": True, "market": market}),
+            )
     except Exception:
         await update_job(job_id, state="failed")
         raise

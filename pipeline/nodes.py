@@ -43,7 +43,6 @@ async def stage_0_identify_market(state: PipelineState) -> dict:
     structured_llm = _get_llm().with_structured_output(MarketIdentificationResult)
 
     ideas_text = "\n".join(f"- {idea}" for idea in state["ideas"])
-    market_signal = state.get("market_signal")
 
     system = (
         "You are a market analyst for a solo developer who builds software products. "
@@ -52,24 +51,20 @@ async def stage_0_identify_market(state: PipelineState) -> dict:
         "Be concrete — name the buyer and the pain, not the space."
     )
 
-    user_content = f"Builder's ideas:\n{ideas_text}"
-    if market_signal:
-        label = market_signal.get("label", "")
-        signal_type = market_signal.get("type", "")
-        value = market_signal.get("value", "")
-        user_content += (
-            f"\n\nBuilder's stated market interest: {label} "
-            f"({signal_type}: {value})\n"
-            "Include this market as the first option if it has real demand."
-        )
-
     messages = [
         SystemMessage(content=system),
-        HumanMessage(content=user_content),
+        HumanMessage(content=f"Builder's ideas:\n{ideas_text}"),
     ]
 
     result: MarketIdentificationResult = await structured_llm.ainvoke(messages)
     return {"market_options": [m.model_dump() for m in result.markets]}
+
+
+async def stage_0_skip_to_research(state: PipelineState) -> dict:
+    """Market already decided by user — skip identification, set market from signal."""
+    signal = state.get("market_signal") or {}
+    market = signal.get("label") or signal.get("value", "")
+    return {"market": market}
 
 
 async def checkpoint_0_market_select(state: PipelineState) -> dict:
