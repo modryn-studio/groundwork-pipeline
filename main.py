@@ -1,11 +1,15 @@
 import asyncio
 import json
 import os
+import sys
 import uuid
 from contextlib import asynccontextmanager
 
-import psycopg
 from dotenv import load_dotenv
+
+load_dotenv()
+
+import psycopg
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
@@ -14,8 +18,6 @@ from psycopg.rows import dict_row
 from pydantic import BaseModel
 
 from db import create_job, create_tables, get_job, update_job
-
-load_dotenv()
 
 NEON_DATABASE_URL = os.environ["NEON_DATABASE_URL"]
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
@@ -35,7 +37,10 @@ async def lifespan(app: FastAPI):
         row_factory=dict_row,
     )
     checkpointer = AsyncPostgresSaver(conn)
-    await checkpointer.setup()
+    try:
+        await checkpointer.setup()
+    except psycopg.errors.UniqueViolation:
+        pass  # migrations already applied on a previous startup
 
     from pipeline.graph import build_graph
     compiled_graph = build_graph(checkpointer)
@@ -44,7 +49,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await conn.aclose()
+    await conn.close()
 
 
 app = FastAPI(lifespan=lifespan)
